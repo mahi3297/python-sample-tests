@@ -1,32 +1,58 @@
 pipeline {
-  agent any
-
-  triggers {
-    githubPush()          // Needs GitHub plugin + webhook [web:200]
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        git branch: 'main', url: 'https://github.com/mahi3297/python-sample-tests.git'
-      }
+    agent any
+    environment {
+        VENV = ".venv"
     }
-
-    stage('Build & Test') {
-      steps {
-        sh 'python3 -m venv venv && . venv/bin/activate && pip install -r requirements.txt'
-        sh '. venv/bin/activate && pytest -q'
-      }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Setup Python') {
+            steps {
+                sh '''
+                python3 -m venv $VENV
+                . $VENV/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
+            }
+        }
+        stage('Lint') {
+            steps {
+                sh '''
+                . $VENV/bin/activate
+                flake8 .
+                '''
+            }
+        }
+        stage('Test') {
+            steps {
+                sh '''
+                . $VENV/bin/activate
+                pytest
+                '''
+            }
+        }
+        stage('Build (Optional)') {
+            steps {
+                echo "Build step (optional for Python)"
+            }
+        }
+        stage('Deploy (Optional)') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo "Deploy step goes here"
+            }
+        }
     }
-
-    stage('Deploy to Dev') {
-      when {
-        branch 'main'
-      }
-      steps {
-        sh 'echo "Deploying to dev server..."'
-      }
+    post {
+        always {
+            cleanWs()
+        }
     }
-  }
 }
 

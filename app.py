@@ -1,6 +1,10 @@
 def add(a, b):
     return a + b
 
-def is_even(x):
-    return x % 2 == 0
+def subtract(a, b):
+    return a - b
+
+if __name__ == "__main__":
+    print("Add:", add(5, 3))
+    print("Subtract:", subtract(10, 4))
 
